@@ -235,6 +235,30 @@ def main():
     _lambda_poly, d = poly_param_search(x_30, y_30, len(x_30))
     print("lambda for rbf, gamma, lambda for poly, d", _lambda_rbf, gamma, _lambda_poly, d)
 
+    a_poly = train(x_30, y_30, poly_kernel, d, _lambda_poly)
+    a_rbf = train(x_30, y_30, rbf_kernel, gamma, _lambda_rbf)
+    grid = np.linalg(0, 1, num=100)
+    k_poly = poly_kernel(x_i=grid, x_j=x_30, d=d)
+    f_poly = a_poly @ k_poly
+    k_rbf = rbf_kernel(x_i=grid, x_j=x_30, gamma=gamma)
+    f_rbf = a_rbf @ k_rbf
+    f_true = f_true(grid)
+    plt.figure("A3-b poly")
+    plt.plot(grid, f_poly, label="poly Kernel Prediction")
+    plt.title("poly curve vs true curve")
+    plt.plot(grid, f_true, label="True Function")
+    plt.legend()
+
+    plt.figure("A3-b rbf")
+    plt.plot(grid, f_rbf, label="RBF Kernel Prediction")
+    plt.plot(grid, f_true, label="True Function")
+    plt.title("rbf curve vs true curve")
+    plt.legend()
+
+    plt.show()
+    
+
+
 
 if __name__ == "__main__":
     main()
