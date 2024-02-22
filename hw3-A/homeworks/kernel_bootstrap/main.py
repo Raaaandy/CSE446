@@ -133,8 +133,8 @@ def cross_validation(
         x_valid = x[start_idx: end_idx]
         y_train = np.concatenate((y[:start_idx], y[end_idx:]))
         y_valid = y[start_idx: end_idx]
-        a_hat = train(x_train, y_train, kernel_function=kernel_function, kernel_param=kernel_param)
-        prediction = a_hat @ kernel_function(x, x, kernel_param)
+        a_hat = train(x_train, y_train, kernel_function=kernel_function, kernel_param=kernel_param, _lambda=_lambda)
+        prediction = a_hat @ kernel_function(x_train, x_valid, kernel_param)
         valid_loss.append(np.subtract(y_valid, prediction)**2)
     return np.mean(valid_loss)
 
@@ -204,7 +204,7 @@ def poly_param_search(
     loss_V = []
     _lambda_V = []
     d_V = []
-    for i in np.linalg(-5, -1, 10):
+    for i in np.linspace(-5, -1, 10):
         _lambda = 10**i
         for d in range(5, 26):
             d_V.append(d)
@@ -233,25 +233,26 @@ def main():
     (x_30, y_30), (x_300, y_300), (x_1000, y_1000) = load_dataset("kernel_bootstrap")
     _lambda_rbf, gamma = rbf_param_search(x_30, y_30, len(x_30))
     _lambda_poly, d = poly_param_search(x_30, y_30, len(x_30))
-    print("lambda for rbf, gamma, lambda for poly, d", _lambda_rbf, gamma, _lambda_poly, d)
+    print("lambda for rbf:", _lambda_rbf, " gamma", gamma, "lambda for poly", _lambda_poly, " d", d)
 
     a_poly = train(x_30, y_30, poly_kernel, d, _lambda_poly)
     a_rbf = train(x_30, y_30, rbf_kernel, gamma, _lambda_rbf)
-    grid = np.linalg(0, 1, num=100)
-    k_poly = poly_kernel(x_i=grid, x_j=x_30, d=d)
+    grid = np.linspace(0, 1, 100)
+    k_poly = poly_kernel(x_i=x_30, x_j=grid, d=d)
+    print(a_poly.shape, k_poly.shape)
     f_poly = a_poly @ k_poly
-    k_rbf = rbf_kernel(x_i=grid, x_j=x_30, gamma=gamma)
+    k_rbf = rbf_kernel(x_i=x_30, x_j=grid, gamma=gamma)
     f_rbf = a_rbf @ k_rbf
-    f_true = f_true(grid)
+    f_true_V = f_true(grid)
     plt.figure("A3-b poly")
     plt.plot(grid, f_poly, label="poly Kernel Prediction")
     plt.title("poly curve vs true curve")
-    plt.plot(grid, f_true, label="True Function")
+    plt.plot(grid, f_true_V, label="True Function")
     plt.legend()
 
     plt.figure("A3-b rbf")
     plt.plot(grid, f_rbf, label="RBF Kernel Prediction")
-    plt.plot(grid, f_true, label="True Function")
+    plt.plot(grid, f_true_V, label="True Function")
     plt.title("rbf curve vs true curve")
     plt.legend()
 

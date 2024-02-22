@@ -25,4 +25,4 @@ class ReLULayer(nn.Module):
             - YOU ARE NOT ALLOWED to use torch.nn.ReLU (or it's functional counterparts) in this class
             - Make use of pytorch documentation: https://pytorch.org/docs/stable/index.html
         """
-        raise NotImplementedError("Your Code Goes Here")
+        return torch.where(x > 0, x, torch.tensor(0., dtype=x.dtype))
