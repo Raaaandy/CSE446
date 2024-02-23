@@ -7,6 +7,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 from utils import problem
+from tqdm import tqdm
 
 
 @problem.tag("hw3-A")
@@ -50,7 +51,29 @@ def train(
         - Make sure to load the model parameters corresponding to model with the best validation loss (if val_loader is provided).
             You might want to look into state_dict: https://pytorch.org/tutorials/beginner/saving_loading_models.html
     """
-    raise NotImplementedError("Your Code Goes Here")
+    history = {"train": [], "val": []}
+    model.train()
+    for itr in tqdm(range(epochs)):
+        epoch_loss = 0
+        for x, y in train_loader:
+            optimizer.zero_grad()
+            y_pred = model(x)
+            loss = criterion(y_pred, y)
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+        history["train"].append(epoch_loss / len(train_loader))
+
+        if val_loader is not None:
+            val_loss = 0
+            with torch.no_grad():
+                for x_val, y_val in val_loader:
+                    y_val_pred = model(x_val)
+                    loss = criterion(y_val_pred, y_val)
+                    val_loss += loss
+            history["val"].append(val_loss / len(val_loader))
+    return history
+
 
 
 def plot_model_guesses(

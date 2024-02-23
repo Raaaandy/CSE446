@@ -45,7 +45,18 @@ def accuracy_score(model: nn.Module, dataloader: DataLoader) -> float:
         - This is similar to CrossEntropy accuracy_score function,
             but there will be differences due to slightly different targets in dataloaders.
     """
-    raise NotImplementedError("Your Code Goes Here")
+    model.eval()
+    correct_num = 0
+    total_num = 0
+    for x, y in dataloader:
+        total_num += y.size(0)
+        y_pred = model(x)
+        correct_idx = torch.argmax(y, dim=1)
+        predict_idx = torch.argmax(y_pred, dim=1)
+        correct_num += (correct_idx == predict_idx).sum().item()
+    accuracy = correct_num / total_num
+    return accuracy
+        
 
 
 @problem.tag("hw3-A")
@@ -84,7 +95,69 @@ def mse_parameter_search(
                 }
             }
     """
-    raise NotImplementedError("Your Code Goes Here")
+    class LinearModel(nn.Module):
+        def __init__(self, input_size, output_size):
+            super().__init__()
+            self.linear = LinearLayer(input_size, output_size)
+
+        def forward(self, input_data):
+            x = self.linear(input)
+            return x
+    
+    class OneHiddenLayer(nn.Module):
+        def __init__(self, input_size, hidden_size, output_size, activation_1):
+            super().__init__()
+            self.linear_0 = LinearLayer(input_size, hidden_size)
+            self.activation = activation_1
+            self.linear_1 = LinearLayer(hidden_size, output_size)
+
+        def forward(self, input_data):
+            hidden_layer = self.activation(self.linear_0(input_data))
+            output_layer = self.linear_1(hidden_layer)
+            return output_layer
+
+    class TwoHiddenLayer(nn.Module):
+        def __init__(self, input_size, hidden_1, hidden_2, output_size, activation_1, activation_2):
+            super().__init__()
+            self.linear_0 = LinearLayer(input_size, hidden_1)
+            self.linear_1 = LinearLayer(hidden_1, hidden_2)
+            self.linear_2 = LinearLayer(hidden_2, output_size)
+            self.activation_1 = activation_1
+            self.activation_2 = activation_2
+        
+        def forward(self, input_data):
+            hidden_1_layer = self.activation_1(self.linear_0(input_data))
+            hidden_2_layer = self.activation_2(self.linear_1(hidden_1_layer))
+            output_layer = self.linear_2(hidden_2_layer)
+            return output_layer
+        
+    input, output = dataset_train[0]
+    input_size, hidden_1, hidden_2, output_size = input.shape[0], 2, 2, output.shape[0]
+    lrs = 10 ** np.linspace(-5, -3, 2)
+    batch_sizes = 2 ** 6
+    models = {
+        "Linear": LinearModel(input_size=input_size, output_size=output_size),
+        "OneSig": OneHiddenLayer(input_size=input_size, hidden_size=2, output_size=output_size, activation_1=SigmoidLayer()),
+        "OneRelu": OneHiddenLayer(input_size=input_size, hidden_size=2, output_size=output_size, activation_1=ReLULayer()),
+        "TwoSigRelu": TwoHiddenLayer(input_size, hidden_1, hidden_2, output_size, SigmoidLayer(), ReLULayer()),
+        "TwoReluSig": TwoHiddenLayer(input_size, hidden_1, hidden_2, output_size, ReLULayer(), SigmoidLayer())
+    }
+    dict_t_v_m = {}
+    history = {"Linear": dict_t_v_m, "OneSig": dict_t_v_m, "OneRelu": dict_t_v_m, "TwoSigRelu": dict_t_v_m, "TwoReluSig": dict_t_v_m}
+    for model_name, model in models.items():
+        print("model:", model_name)
+        lr = 10e-5
+        epochs = int(20 * np.log10(1 / lr))
+        train_loader = DataLoader(dataset_train, batch_size=2**6, shuffle=True)
+        val_loader = DataLoader(dataset_val, 2**6, shuffle=True)
+        model_history = train(train_loader, model, MSELossLayer(), SGDOptimizer(model.parameters(), lr), val_loader, epochs)
+        history[model_name]['train'] = model_history['train']
+        history[model_name]['val'] = model_history['val']
+        history[model_name]['model'] = model
+    return history
+
+
+    
 
 
 @problem.tag("hw3-A", start_line=11)
@@ -114,7 +187,17 @@ def main():
     )
 
     mse_configs = mse_parameter_search(dataset_train, dataset_val)
-    raise NotImplementedError("Your Code Goes Here")
+    plt.figure("hw3-A4-b")
+    for model_name in mse_configs:
+        plt.plot(mse_configs[model_name]["train"], label=f'{model_name} - Train')
+        plt.plot(mse_configs[model_name]["val"], label=f'{model_name} - Validation')
+    plt.xlabel('Epochs')
+    plt.ylabel('MSE Loss')
+    plt.title('Train and Validation Loss per Model')
+    plt.legend()
+    plt.show()
+
+
 
 
 def to_one_hot(a: np.ndarray) -> np.ndarray:

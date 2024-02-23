@@ -83,8 +83,17 @@ def accuracy_score(model, dataloader) -> float:
         - This is similar to MSE accuracy_score function,
             but there will be differences due to slightly different targets in dataloaders.
     """
-    raise NotImplementedError("Your Code Goes Here")
+    model.eval()
+    correct_num = 0
+    total_num = 0
+    for x, y in dataloader:
+        y_pred = model(x)
+        pred_idx = torch.argmax(y_pred, 1)
+        total_num += len(y)
+        correct_num += (pred_idx == y).sum().item()
 
+    accuracy = correct_num / total_num
+    return accuracy
 
 @problem.tag("hw3-A", start_line=7)
 def main():
