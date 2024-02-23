@@ -32,11 +32,11 @@ class LinearLayer(nn.Module):
         """
         super().__init__()
         if generator is None:
-            self.weight = nn.Parameter(torch.randn(dim_in, dim_out, dtype=torch.float64))
-            self.bias = nn.Parameter(torch.randn(dim_in, dim_out, dtype=torch.float64))
+            self.weight = nn.Parameter(torch.randn(dim_in, dim_out, dtype=torch.float))
+            self.bias = nn.Parameter(torch.randn(dim_out, dtype=torch.float))
         else:
-            self.weight = nn.Parameter(torch.randn(dim_in, dim_out, generator=generator, dtype=torch.float64))
-            self.bias = nn.Parameter(torch.randn(dim_in, dim_out, generator=generator, dtype=torch.float64))
+            self.weight = nn.Parameter(torch.randn(dim_in, dim_out, generator=generator, dtype=torch.float))
+            self.bias = nn.Parameter(torch.randn(dim_out, generator=generator, dtype=torch.float))
         
 
 
@@ -52,4 +52,5 @@ class LinearLayer(nn.Module):
             torch.Tensor: More specifically a torch.FloatTensor, with shape of (n, dim_out).
                 Output data.
         """
+
         return x @ self.weight + self.bias
