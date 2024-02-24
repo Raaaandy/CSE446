@@ -95,33 +95,34 @@ def mse_parameter_search(
                 }
             }
     """
+    # Determine the shapes
     class LinearModel(nn.Module):
         def __init__(self, input_size, output_size):
             super().__init__()
             self.linear = LinearLayer(input_size, output_size)
-
-        def forward(self, input_data):
-            x = self.linear(input)
+        
+        def forward(self, inputs):
+            x = self.linear(inputs)
             return x
     
     class OneHiddenLayer(nn.Module):
-        def __init__(self, input_size, hidden_size, output_size, activation_1):
+        def __init__(self, input_size, output_size, hidden_size, activation_func):
             super().__init__()
-            self.linear_0 = LinearLayer(input_size, hidden_size)
-            self.activation = activation_1
-            self.linear_1 = LinearLayer(hidden_size, output_size)
-
-        def forward(self, input_data):
-            hidden_layer = self.activation(self.linear_0(input_data))
-            output_layer = self.linear_1(hidden_layer)
-            return output_layer
+            self.linear0 = LinearLayer(input_size, hidden_size)
+            self.activation = activation_func
+            self.linear1 = LinearLayer(hidden_size, output_size)
+            
+        def forward(self, inputs):
+            x = self.activation(self.linear0(inputs))
+            x = self.linear1(x)
+            return x
 
     class TwoHiddenLayer(nn.Module):
-        def __init__(self, input_size, hidden_1, hidden_2, output_size, activation_1, activation_2):
+        def __init__(self, input_size, hidden_size, output_size, activation_1, activation_2):
             super().__init__()
-            self.linear_0 = LinearLayer(input_size, hidden_1)
-            self.linear_1 = LinearLayer(hidden_1, hidden_2)
-            self.linear_2 = LinearLayer(hidden_2, output_size)
+            self.linear_0 = LinearLayer(input_size, hidden_size)
+            self.linear_1 = LinearLayer(hidden_size, hidden_size)
+            self.linear_2 = LinearLayer(hidden_size, output_size)
             self.activation_1 = activation_1
             self.activation_2 = activation_2
         
@@ -130,31 +131,34 @@ def mse_parameter_search(
             hidden_2_layer = self.activation_2(self.linear_1(hidden_1_layer))
             output_layer = self.linear_2(hidden_2_layer)
             return output_layer
-        
-    input, output = dataset_train[0]
-    input_size, hidden_1, hidden_2, output_size = input.shape[0], 2, 2, output.shape[0]
-    lrs = 10 ** np.linspace(-5, -3, 2)
-    batch_sizes = 2 ** 6
+    
+    input_sample, _ = dataset_train[0]
+    input_feature_size = input_sample.shape[0]
+    output_size = 2
+    lr= 10 ** -4
+    batch_size = (2 ** 5)
     models = {
-        "Linear": LinearModel(input_size=input_size, output_size=output_size),
-        "OneSig": OneHiddenLayer(input_size=input_size, hidden_size=2, output_size=output_size, activation_1=SigmoidLayer()),
-        "OneRelu": OneHiddenLayer(input_size=input_size, hidden_size=2, output_size=output_size, activation_1=ReLULayer()),
-        "TwoSigRelu": TwoHiddenLayer(input_size, hidden_1, hidden_2, output_size, SigmoidLayer(), ReLULayer()),
-        "TwoReluSig": TwoHiddenLayer(input_size, hidden_1, hidden_2, output_size, ReLULayer(), SigmoidLayer())
+        "Linear": LinearModel(input_feature_size, output_size),
+        "Sigmoid": OneHiddenLayer(input_feature_size, output_size, 2, SigmoidLayer()),
+        "ReLU": OneHiddenLayer(input_feature_size, output_size, 2, ReLULayer()),
+        "SigmoidReLU": TwoHiddenLayer(input_feature_size, 2, 2, SigmoidLayer(), ReLULayer()),
+        "ReLUSigmoid": TwoHiddenLayer(input_feature_size, 2, 2, ReLULayer(), SigmoidLayer())
     }
-    dict_t_v_m = {}
-    history = {"Linear": dict_t_v_m, "OneSig": dict_t_v_m, "OneRelu": dict_t_v_m, "TwoSigRelu": dict_t_v_m, "TwoReluSig": dict_t_v_m}
+    # combos = list(itertools.product(lr, batch_size, models.items()))
+    result = {}
+    count = 0
     for model_name, model in models.items():
-        print("model:", model_name)
-        lr = 10e-5
-        epochs = int(20 * np.log10(1 / lr))
-        train_loader = DataLoader(dataset_train, batch_size=2**6, shuffle=True)
-        val_loader = DataLoader(dataset_val, 2**6, shuffle=True)
-        model_history = train(train_loader, model, MSELossLayer(), SGDOptimizer(model.parameters(), lr), val_loader, epochs)
-        history[model_name]['train'] = model_history['train']
-        history[model_name]['val'] = model_history['val']
-        history[model_name]['model'] = model
-    return history
+        train_loader = DataLoader(dataset_train, batch_size=int(batch_size), shuffle=True)
+        val_loader = DataLoader(dataset_val, batch_size=int(batch_size), shuffle=False)
+        history = train(train_loader, model, MSELossLayer(), SGDOptimizer(model.parameters(), lr=lr), val_loader)
+        print(f"{count}: {model_name}")
+        count +=1
+        result[model_name] = {}
+        result[model_name]['train'] = history['train']
+        result[model_name]['val'] = history['val']
+        result[model_name]["model"] = model
+
+    return result
 
 
     
