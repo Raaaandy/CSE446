@@ -146,6 +146,7 @@ def mse_parameter_search(
     }
     result = {}
     count = 0
+    print("lr", lr, "batch size", batch_size)
     for model_name, model in models.items():
         train_loader = DataLoader(dataset_train, batch_size=int(batch_size), shuffle=True)
         val_loader = DataLoader(dataset_val, batch_size=int(batch_size), shuffle=False)
@@ -191,14 +192,31 @@ def main():
 
     mse_configs = mse_parameter_search(dataset_train, dataset_val)
     plt.figure("hw3-A4-b-mse")
+    lowest_val = None
+
     for model_name in mse_configs:
+        if lowest_val is None:
+            lowest_val = min(mse_configs[model_name]["val"])
+            best_model = model_name
+            test_model = mse_configs[model_name]["model"]
+        if lowest_val > min(mse_configs[model_name]["val"]):
+            lowest_val = min(mse_configs[model_name]["val"])
+            best_model = model_name
+            test_model = mse_configs[model_name]["model"]
         plt.plot(mse_configs[model_name]["train"], label=f'{model_name} - Train')
         plt.plot(mse_configs[model_name]["val"], label=f'{model_name} - Validation')
     plt.xlabel('Epochs')
     plt.ylabel('MSE Loss')
     plt.title('Train and Validation Loss per Model')
     plt.legend()
+    print("model:", best_model, "lowest validation",lowest_val)
     plt.show()
+    test_dataloader = DataLoader(dataset_test, batch_size=128)
+    plot_model_guesses(test_dataloader, test_model, "MSE-Test-Scatter")
+    accuarcy = accuracy_score(test_model, test_dataloader)
+    print("accuracy on test dataset", accuarcy)
+
+
 
 
 

@@ -106,7 +106,7 @@ def crossentropy_parameter_search(
     input_sample, _ = dataset_train[0]
     input_feature_size = input_sample.shape[0]
     output_size = 2
-    lr= 10 ** -4
+    lr= 0.001
     batch_size = (2 ** 5)
     models = {
         "Linear": LinearModel(input_feature_size, output_size),
@@ -184,14 +184,29 @@ def main():
 
     ce_configs = crossentropy_parameter_search(dataset_train, dataset_val)
     plt.figure("hw3-A4-b-ce")
+    lowest_val = None
+
     for model_name, model_info in ce_configs.items():
+        if lowest_val is None:
+            lowest_val = min(ce_configs[model_name]["val"])
+            best_model = model_name
+            test_model = model_info["model"]
+        if lowest_val > min(ce_configs[model_name]["val"]):
+            lowest_val = min(ce_configs[model_name]["val"])
+            best_model = model_name
+            test_model = model_info["model"]
         plt.plot(model_info["train"], label=f'{model_name} train loss')
         plt.plot(model_info["val"], label=f'{model_name} val loss')
     plt.legend()
     plt.xlabel("Epoches")
     plt.ylabel("Cross Entropy Loss")
     plt.title("CE plot")
+    print("best model:", best_model, "lowest validation:", lowest_val)
     plt.show()
+    test_dataloader = DataLoader(dataset_test, batch_size=32)
+    plot_model_guesses(test_dataloader, test_model, "CE-Scatter-Plot")
+    accuracy = accuracy_score(test_model, test_dataloader)
+    print("CE accuracy on test:", accuracy)
 
 
 
