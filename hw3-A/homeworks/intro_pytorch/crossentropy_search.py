@@ -60,7 +60,72 @@ def crossentropy_parameter_search(
                 }
             }
     """
-    raise NotImplementedError("Your Code Goes Here")
+    class LinearModel(nn.Module):
+        def __init__(self, input_size, output_size):
+            super().__init__()
+            self.linear = LinearLayer(input_size, output_size)
+            self.softmax = SoftmaxLayer()
+        
+        def forward(self, inputs):
+            x = self.linear(inputs)
+            x = self.softmax(x)
+            return x
+    
+    class OneHiddenLayer(nn.Module):
+        def __init__(self, input_size, output_size, hidden_size, activation_func):
+            super().__init__()
+            self.linear0 = LinearLayer(input_size, hidden_size)
+            self.activation = activation_func
+            self.linear1 = LinearLayer(hidden_size, output_size)
+            self.softmax = SoftmaxLayer()
+            
+        def forward(self, inputs):
+            x = self.activation(self.linear0(inputs))
+            x = self.linear1(x)
+            x = self.softmax(x)
+            return x
+
+    class TwoHiddenLayer(nn.Module):
+        def __init__(self, input_size, hidden_size, output_size, activation_1, activation_2):
+            super().__init__()
+            self.linear_0 = LinearLayer(input_size, hidden_size)
+            self.linear_1 = LinearLayer(hidden_size, hidden_size)
+            self.linear_2 = LinearLayer(hidden_size, output_size)
+            self.activation_1 = activation_1
+            self.activation_2 = activation_2
+            self.softmax = SoftmaxLayer()
+        
+        def forward(self, input_data):
+            hidden_1_layer = self.activation_1(self.linear_0(input_data))
+            hidden_2_layer = self.activation_2(self.linear_1(hidden_1_layer))
+            output_layer = self.linear_2(hidden_2_layer)
+            output_layer = self.softmax(output_layer)
+            return output_layer
+
+
+    input_sample, _ = dataset_train[0]
+    input_feature_size = input_sample.shape[0]
+    output_size = 2
+    lr= 10 ** -4
+    batch_size = (2 ** 5)
+    models = {
+        "Linear": LinearModel(input_feature_size, output_size),
+        "Sigmoid": OneHiddenLayer(input_feature_size, output_size, 2, SigmoidLayer()),
+        "ReLU": OneHiddenLayer(input_feature_size, output_size, 2, ReLULayer()),
+        "SigmoidReLU": TwoHiddenLayer(input_feature_size, 2, 2, SigmoidLayer(), ReLULayer()),
+        "ReLUSigmoid": TwoHiddenLayer(input_feature_size, 2, 2, ReLULayer(), SigmoidLayer())
+    }
+    result = {}
+    for model_name, model in models.items():
+        result[model_name] = {}
+        train_loader = DataLoader(dataset_train, int(batch_size), shuffle=True)
+        val_loader = DataLoader(dataset_val, int(batch_size))
+        history = train(train_loader, model, CrossEntropyLossLayer(), SGDOptimizer(model.parameters(), lr), val_loader, epochs=200)
+        print(model_name)
+        result[model_name]['train'] = history['train']
+        result[model_name]['val'] = history['val']
+        result[model_name]["model"] = model
+    return result
 
 
 @problem.tag("hw3-A")
@@ -118,7 +183,16 @@ def main():
     dataset_test = TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
 
     ce_configs = crossentropy_parameter_search(dataset_train, dataset_val)
-    raise NotImplementedError("Your Code Goes Here")
+    plt.figure("hw3-A4-b-ce")
+    for model_name, model_info in ce_configs.items():
+        plt.plot(model_info["train"], label=f'{model_name} train loss')
+        plt.plot(model_info["val"], label=f'{model_name} val loss')
+    plt.legend()
+    plt.xlabel("Epoches")
+    plt.ylabel("Cross Entropy Loss")
+    plt.title("CE plot")
+    plt.show()
+
 
 
 if __name__ == "__main__":

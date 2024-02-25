@@ -144,7 +144,6 @@ def mse_parameter_search(
         "SigmoidReLU": TwoHiddenLayer(input_feature_size, 2, 2, SigmoidLayer(), ReLULayer()),
         "ReLUSigmoid": TwoHiddenLayer(input_feature_size, 2, 2, ReLULayer(), SigmoidLayer())
     }
-    # combos = list(itertools.product(lr, batch_size, models.items()))
     result = {}
     count = 0
     for model_name, model in models.items():
@@ -191,7 +190,7 @@ def main():
     )
 
     mse_configs = mse_parameter_search(dataset_train, dataset_val)
-    plt.figure("hw3-A4-b")
+    plt.figure("hw3-A4-b-mse")
     for model_name in mse_configs:
         plt.plot(mse_configs[model_name]["train"], label=f'{model_name} - Train')
         plt.plot(mse_configs[model_name]["val"], label=f'{model_name} - Validation')
