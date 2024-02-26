@@ -200,7 +200,7 @@ def main():
     plt.legend()
     plt.xlabel("Epoches")
     plt.ylabel("Cross Entropy Loss")
-    plt.title("CE plot")
+    plt.title("CE Loss vs Epoches")
     print("best model:", best_model, "lowest validation:", lowest_val)
     plt.show()
     test_dataloader = DataLoader(dataset_test, batch_size=32)

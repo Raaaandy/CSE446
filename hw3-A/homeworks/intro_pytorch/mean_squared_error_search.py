@@ -207,7 +207,7 @@ def main():
         plt.plot(mse_configs[model_name]["val"], label=f'{model_name} - Validation')
     plt.xlabel('Epochs')
     plt.ylabel('MSE Loss')
-    plt.title('Train and Validation Loss per Model')
+    plt.title('MSE: Train and Validation Loss per Model')
     plt.legend()
     print("model:", best_model, "lowest validation",lowest_val)
     plt.show()

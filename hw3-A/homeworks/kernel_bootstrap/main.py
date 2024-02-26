@@ -239,14 +239,13 @@ def main():
     a_rbf = train(x_30, y_30, rbf_kernel, gamma, _lambda_rbf)
     grid = np.linspace(0, 1, 100)
     k_poly = poly_kernel(x_i=x_30, x_j=grid, d=d)
-    print(a_poly.shape, k_poly.shape)
     f_poly = a_poly @ k_poly
     k_rbf = rbf_kernel(x_i=x_30, x_j=grid, gamma=gamma)
     f_rbf = a_rbf @ k_rbf
     f_true_V = f_true(grid)
     plt.figure("A3-b poly")
     plt.plot(grid, f_poly, label="poly Kernel Prediction")
-    plt.title("poly curve vs true curve")
+    plt.title("Poly curve vs true curve")
     plt.plot(grid, f_true_V, label="True Function")
     plt.legend()
 
